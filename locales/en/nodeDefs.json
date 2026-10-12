@@ -172,7 +172,7 @@
   },
   "QwenImage21MultiRefEncode": {
     "display_name": "Qwen Image 2.1 Multi-Ref Encode",
-    "description": "Encode every reference image from one images_pipe connection, so the wiring never changes no matter how many references there are. Delegates to ComfyUI's own TextEncodeQwenImage21.",
+    "description": "Encode any number of reference images, including none, from one images_pipe connection, so the wiring never changes. Delegates to ComfyUI's own TextEncodeQwenImage21.",
     "inputs": {
       "clip": {
         "name": "CLIP",
@@ -180,7 +180,7 @@
       },
       "images_pipe": {
         "name": "Images (Pipe)",
-        "tooltip": "Reference images, all of them, over one connection."
+        "tooltip": "Reference images from Multi Image Loader, all of them, over one connection. Leave unconnected for text-to-image."
       },
       "prompt": {
         "name": "Prompt",
@@ -196,7 +196,7 @@
       },
       "resolution": {
         "name": "Reference Resolution",
-        "tooltip": "References are resized to about this many pixels square, preserving aspect ratio. 0 keeps each at its own size, rounded to 32."
+        "tooltip": "References are resized to about this many pixels square, preserving aspect ratio. 0 keeps each at its own size, rounded to 32. With no references, this is the square size of the generated latent instead."
       }
     }
   }

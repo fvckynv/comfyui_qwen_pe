@@ -21,9 +21,20 @@ into. The PE contracts are simply the presets that ship with it.
 | **LM Studio Load Model** | `LMStudioLoadModel` | Loads a model with explicit context length / flash attention / KV offload / batch sizes / prediction slots through LM Studio's native API, and optionally **refuses to load a configuration that would not leave enough VRAM for the diffusion model**. The model dropdown refreshes without restarting ComfyUI. |
 | **LLM Chat (Multi-Image / Presets)** | `LLMChat` | Any OpenAI-compatible endpoint. Sends every image from `images_pipe` at its native resolution, picks its system prompt from a dropdown of `prompts/*.txt`, and can evict the model afterwards to free VRAM. |
 | **PE Hint Resolve** | `PEHintResolve` | Pulls the prompt out of the answer and resolves `wh_ratio` / `ratio_follow` into exact pixels. Tolerates fences, surrounding prose and trailing commas; degrades to 0x0 instead of failing when a size cannot be determined. |
-| **Qwen Image 2.1 Multi-Ref Encode** | `QwenImage21MultiRefEncode` | Encodes every reference from a single `images_pipe` connection by delegating to ComfyUI's own `TextEncodeQwenImage21`. |
+| **Qwen Image 2.1 Multi-Ref Encode** | `QwenImage21MultiRefEncode` | Encodes every reference from a single `images_pipe` connection — **any number, including none** — so one node serves both image editing and text-to-image. Delegates to ComfyUI's own `TextEncodeQwenImage21`. |
 
 All five appear under the **`Qwen PE`** category.
+
+### Text-to-image needs no images
+
+Unhook `images_pipe` from the encoder and the same graph does T2I: ComfyUI's
+encoder declares its autogrow template with `min=0` and takes a text-only path,
+returning a `resolution x resolution` latent. Nothing else changes — the chat
+node already sends a plain string when the pipe is empty, and PE Hint Resolve
+already reports `wh_ratio`-based sizes for the T2I contract.
+
+The encoder used to refuse an empty pipe. That was a bug: it made the node
+unusable for T2I, which is half of what Qwen-Image 2.1 does.
 
 ### Reading what happened
 

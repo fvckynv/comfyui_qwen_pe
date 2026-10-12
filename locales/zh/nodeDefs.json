@@ -172,7 +172,7 @@
   },
   "QwenImage21MultiRefEncode": {
     "display_name": "千问 Image 2.1 多参考编码",
-    "description": "用一根 images_pipe 连接编码所有参考图，无论多少张接线都不变。计算委托给 ComfyUI 自带的 TextEncodeQwenImage21。",
+    "description": "用一根 images_pipe 连接编码任意数量的参考图（包括零张），接线永远不变。计算委托给 ComfyUI 自带的 TextEncodeQwenImage21。",
     "inputs": {
       "clip": {
         "name": "CLIP",
@@ -180,7 +180,7 @@
       },
       "images_pipe": {
         "name": "图片（管道）",
-        "tooltip": "全部参考图，一根线传进来。"
+        "tooltip": "来自「多图加载器」的参考图，一根线传进来。做文生图时不接这根线即可。"
       },
       "prompt": {
         "name": "提示词",
@@ -196,7 +196,7 @@
       },
       "resolution": {
         "name": "参考图分辨率",
-        "tooltip": "参考图会被缩放至约这个边长的正方形范围内，保持宽高比。0 表示各自保持原尺寸，并对齐到 32 的倍数。"
+        "tooltip": "参考图会被缩放至约这个边长的正方形范围内，保持宽高比。0 表示各自保持原尺寸，并对齐到 32 的倍数。没有参考图时，这个值就是生成潜变量的正方形边长。"
       }
     }
   }
