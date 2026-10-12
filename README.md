@@ -56,6 +56,35 @@ git clone https://github.com/<you>/comfyui_qwen_pe.git
 No `pip install` step: the only imports are `requests`, `numpy`, `Pillow` and
 `torch`, all of which ComfyUI already ships. Restart ComfyUI afterwards.
 
+## Example workflow
+
+[`example_workflows/qwen_image_2_1_edit_with_pe.json`](example_workflows/qwen_image_2_1_edit_with_pe.json)
+— Qwen-Image 2.1 image editing with the prompt enhancer inline. Drag it onto the
+ComfyUI canvas, or use *Workflow → Open*.
+
+The graph carries a note explaining itself, but the short version is that three
+things are yours to set:
+
+1. **Start LM Studio's server** (Developer → Start Server) before queueing.
+2. **Swap the three loaders** for model files you actually have.
+3. **Pick the PE model** in *LM Studio Load Model* — click refresh first if the
+   list is stale.
+
+Then drop reference images into *Multi Image Loader* and write the instruction in
+plain language, e.g. `让图1的女孩换上图2的衣服`.
+
+Two details worth noticing, because they are the parts that are easy to get wrong:
+
+* **All three consumers share one `images_pipe`.** The chat node needs the images
+  to see them, the resolver needs them to measure them, and the encoder needs
+  them to condition on them — one source, one order, one resolution.
+* **The output size comes from a switch**, not from the model: either the first
+  reference's own size, or a ratio you pick in *ResolutionSelector*. A rewriter
+  that reports `ratio_follow` is only useful if you route its `width`/`height`
+  somewhere, and this example deliberately does not — it keeps the size
+  predictable, and the resolver's `images_pipe` is wired anyway so its report
+  stays accurate.
+
 ## Languages
 
 The UI follows ComfyUI's own language setting. `locales/en/` and `locales/zh/`
