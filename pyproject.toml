@@ -1,0 +1,24 @@
+[project]
+name = "qwen-image-pe"
+version = "1.0.0"
+description = "One self-contained ComfyUI pipeline for Qwen-Image 2.1 prompt-enhancer models: drag-and-drop multi-image loading, LM Studio load-parameter control, the rewriter itself, hint resolution, and multi-reference encoding."
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = ["requests>=2.27.0"]
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics",
+]
+
+[project.urls]
+Repository = "https://github.com/fvckynv/comfyui_qwen_pe"
+
+[tool.comfy]
+# Required by the Comfy Registry. Create one at https://registry.comfy.org
+PublisherId = "CHANGE_ME"
+DisplayName = "Qwen-Image PE Pipeline"
+Icon = ""
+# The node pack calls comfy_api.latest and comfy_extras.nodes_qwen, both of
+# which are recent additions.
+requires-comfyui = ">=0.3.40"

@@ -1,0 +1,203 @@
+{
+  "MultiImageLoader": {
+    "display_name": "Multi Image Loader",
+    "description": "Drag & drop up to 16 images. The image_N sockets appear and disappear with the count, and images_pipe carries every image at native resolution over a single wire.",
+    "inputs": {
+      "files": {
+        "name": "Files",
+        "tooltip": "Written by this node's upload widget. There is no reason to edit it by hand."
+      }
+    }
+  },
+  "LMStudioLoadModel": {
+    "display_name": "LM Studio Load Model",
+    "description": "Load an LM Studio model with explicit context length, flash attention, KV-cache placement and batch size. The OpenAI-compatible API cannot set these, so this node calls LM Studio's native API instead.",
+    "inputs": {
+      "model": {
+        "name": "Model",
+        "tooltip": "LM Studio model key, quantization suffix included. Click refresh after downloading a new model."
+      },
+      "api_base_url": {
+        "name": "LM Studio URL",
+        "tooltip": "Origin of the LM Studio server. /v1 is added automatically."
+      },
+      "context_length": {
+        "name": "Context Length",
+        "tooltip": "Total tokens the model may hold, input plus output. A prompt rewriter with a 10-18 KB contract and reference images needs at least 16384."
+      },
+      "flash_attention": {
+        "name": "Flash Attention",
+        "tooltip": "Faster and cheaper on memory. Leave on unless it causes trouble."
+      },
+      "offload_kv_cache_to_gpu": {
+        "name": "KV Cache on GPU",
+        "tooltip": "Keep the attention cache in VRAM rather than system memory."
+      },
+      "eval_batch_size": {
+        "name": "Evaluation Batch Size",
+        "tooltip": "Prompt-processing batch size. Larger is faster but uses more VRAM."
+      },
+      "physical_batch_size": {
+        "name": "Physical Batch Size",
+        "tooltip": "Batch size actually submitted to the GPU. Lower it when a large evaluation batch does not fit."
+      },
+      "parallel": {
+        "name": "Prediction Slots",
+        "tooltip": "How many predictions the model may serve at once. A ComfyUI graph sends one request at a time, so extra slots buy nothing and cost memory. Context length is per slot, not shared."
+      },
+      "context_checkpoints": {
+        "name": "Context Checkpoints",
+        "tooltip": "How many prompt checkpoints to keep, so a re-used prefix can be reprocessed cheaply. 0 disables it."
+      },
+      "unload_other_models": {
+        "name": "Unload Other Models",
+        "tooltip": "Unload every other loaded instance, including stale extra instances of this same model, so exactly one clean instance stays resident."
+      },
+      "vram_budget_gib": {
+        "name": "VRAM Budget (GiB)",
+        "tooltip": "0 disables the check. Above 0 this node asks LM Studio what the configuration would cost and refuses to load when it overshoots, so the prompt enhancer cannot quietly take the VRAM the diffusion model needs next. Set it to what is left of your GPU after the diffusion model."
+      },
+      "timeout_sec": {
+        "name": "Timeout (seconds)",
+        "tooltip": "How long to wait for the load to finish."
+      }
+    }
+  },
+  "LLMChat": {
+    "display_name": "LLM Chat (Multi-Image / Presets)",
+    "description": "Chat with any OpenAI-compatible LLM. Sends every image from images_pipe at its native resolution, and takes its system prompt from a dropdown of the .txt files in prompts/.",
+    "inputs": {
+      "api_base_url": {
+        "name": "API Base URL",
+        "tooltip": "Any OpenAI-compatible endpoint: LM Studio, Ollama, llama.cpp, OpenRouter, OpenAI."
+      },
+      "model": {
+        "name": "Model",
+        "tooltip": "Model key. Link it from LM Studio Load Model so load parameters are applied first."
+      },
+      "system_prompt": {
+        "name": "System Prompt Preset",
+        "tooltip": "Two sources: .txt files in this pack's prompts/ folder, and LM Studio presets that carry a system prompt (shown with an [LM] prefix). LM Studio ones are re-read every run, so editing one takes effect on the next queue. Click refresh after adding a new preset.",
+        "options": {
+          "pe_i2i.txt": "PE edit contract (image-to-image)",
+          "pe_t2i.txt": "PE text-to-image contract",
+          "(custom)": "(custom — use the text box below)"
+        }
+      },
+      "user_prompt": {
+        "name": "User Prompt",
+        "tooltip": "What you want to ask. Sent as the single user turn; no history is kept."
+      },
+      "max_tokens": {
+        "name": "Max Tokens",
+        "tooltip": "Prompt rewriters think before answering, so this must cover the thinking block AND the answer. A value near 1024 truncates the JSON mid-object."
+      },
+      "images_pipe": {
+        "name": "Images (Pipe)",
+        "tooltip": "Images from Multi Image Loader, sent at native resolution. Needed by vision models and edit contracts."
+      },
+      "system_prompt_text": {
+        "name": "System Prompt Text",
+        "tooltip": "Overrides the dropdown whenever it is non-empty. Also works as a link, so a system prompt can come from elsewhere."
+      },
+      "image_max_count": {
+        "name": "Max Images",
+        "tooltip": "Upper bound on how many images from the pipe are sent."
+      },
+      "temperature": {
+        "name": "Temperature",
+        "tooltip": "Lower is more deterministic; higher is more varied."
+      },
+      "top_p": {
+        "name": "Top P",
+        "tooltip": "Nucleus sampling cutoff. 1.0 disables it."
+      },
+      "seed": {
+        "name": "Seed",
+        "tooltip": "-1 omits the seed entirely."
+      },
+      "thinking": {
+        "name": "Thinking",
+        "tooltip": "default sends nothing, which is what the PE models expect. They only support on/off and ignore effort levels.",
+        "options": {
+          "default": "Default",
+          "on": "On",
+          "off": "Off"
+        }
+      },
+      "json_mode": {
+        "name": "JSON Mode",
+        "tooltip": "Ask the server for JSON-object output. A contract that already demands JSON makes this unnecessary."
+      },
+      "stop": {
+        "name": "Stop Sequences",
+        "tooltip": "One stop sequence per line, or a JSON array of strings."
+      },
+      "unload_after": {
+        "name": "Unload After",
+        "tooltip": "Free VRAM once the answer is in, so downstream image generation has room. Uses LM Studio's native API.",
+        "options": {
+          "off": "Off",
+          "this": "Unload this model",
+          "all": "Unload everything"
+        }
+      },
+      "timeout_sec": {
+        "name": "Timeout (seconds)",
+        "tooltip": "How long to wait for the response."
+      }
+    }
+  },
+  "PEHintResolve": {
+    "display_name": "PE Hint Resolve",
+    "description": "Strip the JSON wrapper off an LLM hint and resolve wh_ratio / ratio_follow into exact pixel dimensions. An unresolvable size comes back as 0x0 with an explanation, never as an error.",
+    "inputs": {
+      "hint": {
+        "name": "JSON Hint",
+        "tooltip": "The JSON text from LLM Chat."
+      },
+      "images_pipe": {
+        "name": "Images (Pipe)",
+        "tooltip": "Needed only when the hint says ratio_follow, e.g. '<image1>'. Connect the same images_pipe the chat node uses."
+      },
+      "megapixels": {
+        "name": "Megapixels",
+        "tooltip": "Pixel budget when the hint gives wh_ratio. Ignored for ratio_follow."
+      },
+      "multiple": {
+        "name": "Size Multiple",
+        "tooltip": "Grid that width and height are snapped to. 8 matches ComfyUI's latent grid."
+      }
+    }
+  },
+  "QwenImage21MultiRefEncode": {
+    "display_name": "Qwen Image 2.1 Multi-Ref Encode",
+    "description": "Encode every reference image from one images_pipe connection, so the wiring never changes no matter how many references there are. Delegates to ComfyUI's own TextEncodeQwenImage21.",
+    "inputs": {
+      "clip": {
+        "name": "CLIP",
+        "tooltip": "The Qwen-Image 2.1 text encoder."
+      },
+      "images_pipe": {
+        "name": "Images (Pipe)",
+        "tooltip": "Reference images, all of them, over one connection."
+      },
+      "prompt": {
+        "name": "Prompt",
+        "tooltip": "The rewritten prompt, usually from PE Hint Resolve."
+      },
+      "negative_prompt": {
+        "name": "Negative Prompt",
+        "tooltip": "Usually left empty for Qwen-Image."
+      },
+      "vae": {
+        "name": "VAE",
+        "tooltip": "Optional. When connected, references are also spliced in as VAE latents."
+      },
+      "resolution": {
+        "name": "Reference Resolution",
+        "tooltip": "References are resized to about this many pixels square, preserving aspect ratio. 0 keeps each at its own size, rounded to 32."
+      }
+    }
+  }
+}

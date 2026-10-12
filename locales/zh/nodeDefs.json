@@ -1,0 +1,203 @@
+{
+  "MultiImageLoader": {
+    "display_name": "多图加载器",
+    "description": "拖拽上传最多 16 张图。image_N 输出口随图片数量自动增减，images_pipe 用一根线把所有图片按原尺寸传出去。",
+    "inputs": {
+      "files": {
+        "name": "文件列表",
+        "tooltip": "由本节点的上传控件写入，不需要手动编辑。"
+      }
+    }
+  },
+  "LMStudioLoadModel": {
+    "display_name": "LM Studio 模型加载",
+    "description": "用指定的上下文长度、Flash Attention、KV 缓存位置和批大小加载 LM Studio 模型。OpenAI 兼容接口设不了这些，所以本节点走 LM Studio 原生接口。",
+    "inputs": {
+      "model": {
+        "name": "模型",
+        "tooltip": "LM Studio 的模型标识（含量化后缀）。下载了新模型后点「刷新模型」。"
+      },
+      "api_base_url": {
+        "name": "LM Studio 地址",
+        "tooltip": "LM Studio 服务的根地址，/v1 会自动补上。"
+      },
+      "context_length": {
+        "name": "上下文长度",
+        "tooltip": "模型能容纳的总 token 数（输入 + 输出）。带 10–18 KB 合约和参考图的提示词重写器至少需要 16384。"
+      },
+      "flash_attention": {
+        "name": "Flash Attention",
+        "tooltip": "更快、更省显存。没有异常就保持开启。"
+      },
+      "offload_kv_cache_to_gpu": {
+        "name": "KV 缓存放显存",
+        "tooltip": "把注意力缓存放在显存而不是内存里。"
+      },
+      "eval_batch_size": {
+        "name": "评估批大小",
+        "tooltip": "提示词处理的批大小。越大越快，但更吃显存。"
+      },
+      "physical_batch_size": {
+        "name": "物理批大小",
+        "tooltip": "真正提交给显卡的批大小。评估批给大了放不下时，调小这个。"
+      },
+      "parallel": {
+        "name": "并发槽位数",
+        "tooltip": "模型同时能处理几个请求。ComfyUI 一次只发一个请求，多开的槽位白占显存。上下文长度是每个槽位的，不是共享的。"
+      },
+      "context_checkpoints": {
+        "name": "上下文检查点",
+        "tooltip": "保留多少个提示词检查点，让重复的前缀能被廉价地重新处理。0 表示关闭。"
+      },
+      "unload_other_models": {
+        "name": "卸载其他模型",
+        "tooltip": "先卸载所有其他已加载实例（包括同一模型的多余残留实例），确保最终只留一个干净的实例。"
+      },
+      "vram_budget_gib": {
+        "name": "显存预算 (GiB)",
+        "tooltip": "0 表示不检查。大于 0 时，节点会先问 LM Studio 这套配置要多少显存，超预算就拒绝加载 —— 这样提示词模型就不会悄悄吃掉扩散模型下一步要用的显存。填「显卡总量减去扩散模型占用」剩下的那部分。"
+      },
+      "timeout_sec": {
+        "name": "超时（秒）",
+        "tooltip": "等待加载完成的最长时间。"
+      }
+    }
+  },
+  "LLMChat": {
+    "display_name": "LLM 对话（多图 / 预设）",
+    "description": "对接任意 OpenAI 兼容的大模型服务。images_pipe 里的图片按原尺寸全部发出去，系统提示词从 prompts/ 目录的 .txt 文件下拉选择。",
+    "inputs": {
+      "api_base_url": {
+        "name": "API 地址",
+        "tooltip": "任意 OpenAI 兼容端点：LM Studio、Ollama、llama.cpp、OpenRouter、OpenAI 都行。"
+      },
+      "model": {
+        "name": "模型",
+        "tooltip": "模型标识。建议从「LM Studio 模型加载」连过来，这样加载参数才会先生效。"
+      },
+      "system_prompt": {
+        "name": "系统提示词预设",
+        "tooltip": "两个来源：本包 prompts/ 目录里的 .txt，以及 LM Studio 里带系统提示词的预设（带 [LM] 前缀）。LM Studio 的预设每次运行都会重新读取，改完下一次排队就生效。新加了预设点一下「刷新预设」。",
+        "options": {
+          "pe_i2i.txt": "PE 改图合约（图生图）",
+          "pe_t2i.txt": "PE 文生图合约",
+          "(custom)": "（自定义 —— 用下面的文本框）"
+        }
+      },
+      "user_prompt": {
+        "name": "用户提示词",
+        "tooltip": "你要问的内容。作为唯一的一轮用户消息发出，不保留任何对话历史。"
+      },
+      "max_tokens": {
+        "name": "最大输出长度",
+        "tooltip": "提示词重写器会先思考再回答，所以这个值要同时覆盖思考块和答案。接近 1024 会把 JSON 拦腰截断。"
+      },
+      "images_pipe": {
+        "name": "图片（管道）",
+        "tooltip": "来自「多图加载器」，按原尺寸发送。视觉模型和改图合约都需要它。"
+      },
+      "system_prompt_text": {
+        "name": "系统提示词文本",
+        "tooltip": "只要非空就覆盖上面的下拉。也可以作为连线口，让系统提示词从别处传进来。"
+      },
+      "image_max_count": {
+        "name": "最多发送张数",
+        "tooltip": "从管道里最多取几张图发出去。"
+      },
+      "temperature": {
+        "name": "温度",
+        "tooltip": "越低越确定，越高越发散。"
+      },
+      "top_p": {
+        "name": "Top P",
+        "tooltip": "核采样阈值。1.0 表示不截断。"
+      },
+      "seed": {
+        "name": "随机种子",
+        "tooltip": "-1 表示完全不带这个字段。"
+      },
+      "thinking": {
+        "name": "思考",
+        "tooltip": "default 不发送任何控制字段，这正是 PE 模型期望的。它们只支持开/关，会忽略强度档位。",
+        "options": {
+          "default": "默认",
+          "on": "开启",
+          "off": "关闭"
+        }
+      },
+      "json_mode": {
+        "name": "JSON 模式",
+        "tooltip": "要求服务端输出 JSON 对象。合约本身已经强制 JSON 时没必要开。"
+      },
+      "stop": {
+        "name": "停止词",
+        "tooltip": "每行一个停止序列，或写成 JSON 字符串数组。"
+      },
+      "unload_after": {
+        "name": "跑完卸载",
+        "tooltip": "回答拿到后就释放显存，给后面的出图流程腾地方。走 LM Studio 原生接口。",
+        "options": {
+          "off": "不卸载",
+          "this": "卸载本模型",
+          "all": "卸载全部"
+        }
+      },
+      "timeout_sec": {
+        "name": "超时（秒）",
+        "tooltip": "等待响应的最长时间。"
+      }
+    }
+  },
+  "PEHintResolve": {
+    "display_name": "PE 提示词解析",
+    "description": "剥掉大模型输出里的 JSON 外壳，并把 wh_ratio / ratio_follow 换算成精确像素尺寸。尺寸解析不出来时返回 0×0 并说明原因，绝不报错。",
+    "inputs": {
+      "hint": {
+        "name": "JSON 提示",
+        "tooltip": "来自「LLM 对话」的 text 输出。"
+      },
+      "images_pipe": {
+        "name": "图片（管道）",
+        "tooltip": "仅当提示里写了 ratio_follow（如 '<image1>'）时才需要。接上和对话节点同一根 images_pipe 即可。"
+      },
+      "megapixels": {
+        "name": "百万像素",
+        "tooltip": "提示给出 wh_ratio 时的像素预算。给 ratio_follow 时会被忽略。"
+      },
+      "multiple": {
+        "name": "尺寸对齐倍数",
+        "tooltip": "宽高会向上对齐到这个网格。8 与 ComfyUI 的潜空间网格一致。"
+      }
+    }
+  },
+  "QwenImage21MultiRefEncode": {
+    "display_name": "千问 Image 2.1 多参考编码",
+    "description": "用一根 images_pipe 连接编码所有参考图，无论多少张接线都不变。计算委托给 ComfyUI 自带的 TextEncodeQwenImage21。",
+    "inputs": {
+      "clip": {
+        "name": "CLIP",
+        "tooltip": "Qwen-Image 2.1 的文本编码器。"
+      },
+      "images_pipe": {
+        "name": "图片（管道）",
+        "tooltip": "全部参考图，一根线传进来。"
+      },
+      "prompt": {
+        "name": "提示词",
+        "tooltip": "重写后的提示词，通常来自「PE 提示词解析」。"
+      },
+      "negative_prompt": {
+        "name": "负面提示词",
+        "tooltip": "Qwen-Image 一般留空。"
+      },
+      "vae": {
+        "name": "VAE",
+        "tooltip": "可选。接上后参考图还会作为 VAE 潜变量拼接进去。"
+      },
+      "resolution": {
+        "name": "参考图分辨率",
+        "tooltip": "参考图会被缩放至约这个边长的正方形范围内，保持宽高比。0 表示各自保持原尺寸，并对齐到 32 的倍数。"
+      }
+    }
+  }
+}
